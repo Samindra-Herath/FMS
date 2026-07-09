@@ -1,3 +1,7 @@
+package com.faculty.view;
+
+import com.faculty.util.DatabaseConnection;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -102,7 +106,7 @@ public class SignupGUI extends JFrame {
         btnBack.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                new AuthGUI().setVisible(true); // Open Login window
+                new LoginView().setVisible(true); // Open Login window
                 dispose(); // Close this window
             }
         });
@@ -145,7 +149,7 @@ public class SignupGUI extends JFrame {
 
             if (rowsInserted > 0) {
                 JOptionPane.showMessageDialog(this, "Registration Successful! You can now log in.");
-                new AuthGUI().setVisible(true); // Take them back to login
+                new LoginView().setVisible(true); // Take them back to login
                 dispose(); // Close signup window
             }
 
