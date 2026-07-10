@@ -91,8 +91,9 @@ public class LoginView extends JFrame {
             if (role.equals("Student")) {
                 new StudentDashboardView(username).setVisible(true);
                 dispose();
-            } else {
-                JOptionPane.showMessageDialog(this, "Module operational for Students only in current iteration.");
+            } else if(role.equals("Admin")) {
+                new AdminDashboardView(username).setVisible(true);
+                dispose();
             }
         } else {
             JOptionPane.showMessageDialog(this, "Access Denied: Invalid parameters matched.", "Auth Error", JOptionPane.ERROR_MESSAGE);
