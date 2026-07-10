@@ -11,6 +11,9 @@ public class AdminDashboardView extends JFrame {
     private JLabel lblCurrentTab;
     private String currentView = "Students";
 
+    private JButton btnStudents, btnLecturers, btnCourses, btnDepartments, btnDegrees, btnLogout;
+    private JButton btnAdd, btnEdit, btnDelete, btnSaveChanges;
+
     public AdminDashboardView(String username) {
         setTitle("Faculty Management System - Admin Dashboard");
         setSize(950, 600);
@@ -18,7 +21,6 @@ public class AdminDashboardView extends JFrame {
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
 
-        // --- 1. SIDEBAR PANEL ---
         JPanel sidebar = new JPanel(null);
         sidebar.setBackground(new Color(110, 44, 194));
         sidebar.setPreferredSize(new Dimension(230, 600));
@@ -35,13 +37,13 @@ public class AdminDashboardView extends JFrame {
         lblWelcome.setBounds(25, 80, 180, 25);
         sidebar.add(lblWelcome);
 
-        JButton btnStudents = createSidebarButton("Students", 140);
-        JButton btnLecturers = createSidebarButton("Lecturers", 190);
-        JButton btnCourses = createSidebarButton("Courses", 240);
-        JButton btnDepartments = createSidebarButton("Departments", 290);
-        JButton btnDegrees = createSidebarButton("Degrees", 340);
+        btnStudents = createSidebarButton("Students", 140);
+        btnLecturers = createSidebarButton("Lecturers", 190);
+        btnCourses = createSidebarButton("Courses", 240);
+        btnDepartments = createSidebarButton("Departments", 290);
+        btnDegrees = createSidebarButton("Degrees", 340);
 
-        JButton btnLogout = new JButton("Sign Out");
+        btnLogout = new JButton("Sign Out");
         btnLogout.setBounds(15, 500, 200, 35);
         btnLogout.setBackground(new Color(220, 53, 69));
         btnLogout.setForeground(Color.WHITE);
@@ -53,39 +55,34 @@ public class AdminDashboardView extends JFrame {
         sidebar.add(btnDepartments);
         sidebar.add(btnDegrees);
         sidebar.add(btnLogout);
-
         add(sidebar, BorderLayout.WEST);
 
-        // --- 2. MAIN WORKSPACE PANEL ---
         JPanel mainContentPanel = new JPanel(new BorderLayout());
         mainContentPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
-        // Top Heading & CRUD Action Buttons
         JPanel topPanel = new JPanel(new BorderLayout());
         lblCurrentTab = new JLabel("Students");
         lblCurrentTab.setFont(new Font("Arial", Font.BOLD, 22));
         topPanel.add(lblCurrentTab, BorderLayout.WEST);
 
         JPanel crudPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        JButton btnAdd = new JButton("Add new");
-        JButton btnEdit = new JButton("Edit");
-        JButton btnDelete = new JButton("Delete");
+        btnAdd = new JButton("Add new");
+        btnEdit = new JButton("Edit");
+        btnDelete = new JButton("Delete");
+
         crudPanel.add(btnAdd);
         crudPanel.add(btnEdit);
         crudPanel.add(btnDelete);
         topPanel.add(crudPanel, BorderLayout.EAST);
-
         mainContentPanel.add(topPanel, BorderLayout.NORTH);
 
-        // Central Grid Table View
         tableModel = new DefaultTableModel();
         tblData = new JTable(tableModel);
         tblData.setRowHeight(30);
         JScrollPane scrollPane = new JScrollPane(tblData);
         mainContentPanel.add(scrollPane, BorderLayout.CENTER);
 
-        // Bottom Decorative Bar / Save changes button area
-        JButton btnSaveChanges = new JButton("Save changes");
+        btnSaveChanges = new JButton("Save changes");
         btnSaveChanges.setBackground(new Color(110, 44, 194));
         btnSaveChanges.setForeground(Color.WHITE);
         btnSaveChanges.setFont(new Font("Arial", Font.BOLD, 14));
@@ -93,20 +90,12 @@ public class AdminDashboardView extends JFrame {
 
         add(mainContentPanel, BorderLayout.CENTER);
 
-        // --- 3. TAB EVENT ROUTING ---
-        btnStudents.addActionListener(e -> switchTab("Students"));
-        btnLecturers.addActionListener(e -> switchTab("Lecturers"));
-        btnCourses.addActionListener(e -> switchTab("Courses"));
-        btnDepartments.addActionListener(e -> switchTab("Departments"));
-        btnDegrees.addActionListener(e -> switchTab("Degrees"));
-
         btnLogout.addActionListener(e -> {
             new LoginView().setVisible(true);
             dispose();
         });
 
-        // Initialize display headers
-        switchTab("Students");
+        updateTabHeaders("Students");
         new com.faculty.controller.AdminController(this);
     }
 
@@ -120,16 +109,14 @@ public class AdminDashboardView extends JFrame {
         return button;
     }
 
-    private void switchTab(String targetTab) {
-        currentView = targetTab;
+    public void updateTabHeaders(String targetTab) {
+        this.currentView = targetTab;
         lblCurrentTab.setText(targetTab);
-
         tableModel.setRowCount(0);
         tableModel.setColumnCount(0);
 
-        // Setup individual layout metadata configurations matching your schema properties
         if (currentView.equals("Students")) {
-            tableModel.setColumnIdentifiers(new String[]{"Student ID", "Full Name", "Batch", "Degree"});
+            tableModel.setColumnIdentifiers(new String[]{"ID", "Full Name", "Reg ID", "Degree", "Email", "Mobile"});
         } else if (currentView.equals("Lecturers")) {
             tableModel.setColumnIdentifiers(new String[]{"Lecturer ID", "Full Name", "Department"});
         } else if (currentView.equals("Courses")) {
@@ -139,9 +126,17 @@ public class AdminDashboardView extends JFrame {
         } else if (currentView.equals("Degrees")) {
             tableModel.setColumnIdentifiers(new String[]{"Degree ID", "Degree Name"});
         }
-
-        // Add dummy rows to let you step through and visualize layouts natively
-        tableModel.addRow(new Object[]{"Sample ID 1", "Placeholder Row Data A", "Val 1", "Val 2"});
-        tableModel.addRow(new Object[]{"Sample ID 2", "Placeholder Row Data B", "Val 3", "Val 4"});
     }
+
+    public DefaultTableModel getTableModel() { return this.tableModel; }
+    public JTable getTblData() { return this.tblData; }
+    public JButton getBtnStudents() { return btnStudents; }
+    public JButton getBtnLecturers() { return btnLecturers; }
+    public JButton getBtnCourses() { return btnCourses; }
+    public JButton getBtnDepartments() { return btnDepartments; }
+    public JButton getBtnDegrees() { return btnDegrees; }
+    public JButton getBtnAdd() { return btnAdd; }
+    public JButton getBtnEdit() { return btnEdit; }
+    public JButton getBtnDelete() { return btnDelete; }
+    public JButton getBtnSaveChanges() { return btnSaveChanges; }
 }
