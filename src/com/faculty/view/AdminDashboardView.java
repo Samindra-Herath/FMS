@@ -109,6 +109,7 @@ public class AdminDashboardView extends JFrame {
         return button;
     }
 
+    // UPDATED FUNCTION: Aligned exactly to the parameters inside your database schema definitions
     public void updateTabHeaders(String targetTab) {
         this.currentView = targetTab;
         lblCurrentTab.setText(targetTab);
@@ -118,13 +119,14 @@ public class AdminDashboardView extends JFrame {
         if (currentView.equals("Students")) {
             tableModel.setColumnIdentifiers(new String[]{"ID", "Full Name", "Reg ID", "Degree", "Email", "Mobile"});
         } else if (currentView.equals("Lecturers")) {
-            tableModel.setColumnIdentifiers(new String[]{"Lecturer ID", "Full Name", "Department"});
+            // Displays your core database metadata alongside the joined department context
+            tableModel.setColumnIdentifiers(new String[]{"Lecturer ID", "Full Name", "Department", "Email", "Mobile Number"});
         } else if (currentView.equals("Courses")) {
-            tableModel.setColumnIdentifiers(new String[]{"Course Code", "Course Name", "Credits"});
+            tableModel.setColumnIdentifiers(new String[]{"Course Code", "Course Name", "Credits", "Assigned Lecturer ID"});
         } else if (currentView.equals("Departments")) {
             tableModel.setColumnIdentifiers(new String[]{"Department ID", "Department Name"});
         } else if (currentView.equals("Degrees")) {
-            tableModel.setColumnIdentifiers(new String[]{"Degree ID", "Degree Name"});
+            tableModel.setColumnIdentifiers(new String[]{"Degree ID", "Degree Name", "Linked Dept ID"});
         }
     }
 
