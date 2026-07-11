@@ -4,7 +4,6 @@ import com.faculty.dao.AdminDAO;
 import com.faculty.view.AdminDashboardView;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
-import java.util.List;
 
 public class AdminController {
 
@@ -22,7 +21,7 @@ public class AdminController {
 
     private void initTabNavigation() {
         view.getBtnStudents().addActionListener(e -> { currentTab = "Students"; view.updateTabHeaders("Students"); refreshStudentTable(); });
-        view.getBtnLecturers().addActionListener(e -> { currentTab = "Lecturers"; view.updateTabHeaders("Lecturers"); view.getTableModel().setRowCount(0); });
+        view.getBtnLecturers().addActionListener(e -> { currentTab = "Lecturers"; view.updateTabHeaders("Lecturers"); refreshLecturerTable(); });
         view.getBtnCourses().addActionListener(e -> { currentTab = "Courses"; view.updateTabHeaders("Courses"); view.getTableModel().setRowCount(0); });
         view.getBtnDepartments().addActionListener(e -> { currentTab = "Departments"; view.updateTabHeaders("Departments"); view.getTableModel().setRowCount(0); });
         view.getBtnDegrees().addActionListener(e -> { currentTab = "Degrees"; view.updateTabHeaders("Degrees"); view.getTableModel().setRowCount(0); });
@@ -44,6 +43,35 @@ public class AdminController {
                         adminDAO.addRecord("Students", data);
                         refreshStudentTable();
                     } catch (NumberFormatException ex) { JOptionPane.showMessageDialog(view, "Invalid Degree ID."); }
+                }
+            }
+
+            else if ("Lecturers".equals(currentTab)) {
+                JTextField txtUser = new JTextField();
+                JTextField txtPass = new JPasswordField();
+                JTextField txtName = new JTextField();
+                JTextField txtDeptId = new JTextField("1");
+                JTextField txtEmail = new JTextField();
+                JTextField txtMobile = new JTextField();
+
+                Object[] message = {
+                        "System Username:", txtUser,
+                        "System Password:", txtPass,
+                        "Lecturer Full Name:", txtName,
+                        "Department ID:", txtDeptId,
+                        "Email Address:", txtEmail,
+                        "Mobile Phone Number:", txtMobile
+                };
+
+                if (JOptionPane.showConfirmDialog(view, message, "Add New Lecturer Profile", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+                    try {
+                        Object[] data = {
+                                txtUser.getText(), txtPass.getText(), txtName.getText(),
+                                Integer.parseInt(txtDeptId.getText()), txtEmail.getText(), txtMobile.getText()
+                        };
+                        adminDAO.addRecord("Lecturers", data);
+                        refreshLecturerTable();
+                    } catch (NumberFormatException ex) { JOptionPane.showMessageDialog(view, "Invalid Department ID Input formatting."); }
                 }
             }
         });
@@ -69,6 +97,38 @@ public class AdminController {
                     } catch (NumberFormatException ex) { JOptionPane.showMessageDialog(view, "Invalid Degree ID."); }
                 }
             }
+
+            // FIXED: Expanded dialogue component layouts now collect inputs for Full Name, Dept ID, Email, and Mobile
+            else if ("Lecturers".equals(currentTab)) {
+                int selectedRow = view.getTblData().getSelectedRow();
+                if (selectedRow == -1) { JOptionPane.showMessageDialog(view, "Please select a lecturer row first from the data grid table layout views."); return; }
+
+                int lecturerId = (int) view.getTableModel().getValueAt(selectedRow, 0);
+                JTextField txtName = new JTextField(view.getTableModel().getValueAt(selectedRow, 1) != null ? view.getTableModel().getValueAt(selectedRow, 1).toString() : "");
+                JTextField txtDeptId = new JTextField("1");
+                JTextField txtEmail = new JTextField(view.getTableModel().getValueAt(selectedRow, 3) != null ? view.getTableModel().getValueAt(selectedRow, 3).toString() : "");
+                JTextField txtMobile = new JTextField(view.getTableModel().getValueAt(selectedRow, 4) != null ? view.getTableModel().getValueAt(selectedRow, 4).toString() : "");
+
+                Object[] message = {
+                        "Lecturer Full Name:", txtName,
+                        "Target Department ID:", txtDeptId,
+                        "Email Address:", txtEmail,
+                        "Mobile Phone Number:", txtMobile
+                };
+                if (JOptionPane.showConfirmDialog(view, message, "Edit Lecturer Details", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+                    try {
+                        Object[] data = {
+                                txtName.getText(),
+                                Integer.parseInt(txtDeptId.getText()),
+                                txtEmail.getText(),
+                                txtMobile.getText(),
+                                lecturerId
+                        };
+                        adminDAO.updateRecord("Lecturers", data);
+                        refreshLecturerTable();
+                    } catch (NumberFormatException ex) { JOptionPane.showMessageDialog(view, "Invalid Department ID Format."); }
+                }
+            }
         });
 
         view.getBtnDelete().addActionListener(e -> {
@@ -81,10 +141,21 @@ public class AdminController {
                     refreshStudentTable();
                 }
             }
+
+            else if ("Lecturers".equals(currentTab)) {
+                int selectedRow = view.getTblData().getSelectedRow();
+                if (selectedRow == -1) { JOptionPane.showMessageDialog(view, "Please point out and select a Lecturer record from the row display lines."); return; }
+                int lecturerId = (int) view.getTableModel().getValueAt(selectedRow, 0);
+                if (JOptionPane.showConfirmDialog(view, "Permanently wipe this Lecturer record along with credential accounts?", "Confirm Destructive Action Execution", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+                    adminDAO.deleteRecord("Lecturers", String.valueOf(lecturerId));
+                    refreshLecturerTable();
+                }
+            }
         });
 
         view.getBtnSaveChanges().addActionListener(e -> {
             if ("Students".equals(currentTab)) refreshStudentTable();
+            else if ("Lecturers".equals(currentTab)) refreshLecturerTable();
             JOptionPane.showMessageDialog(view, "Database perfectly synchronized with current view.");
         });
     }
@@ -93,6 +164,14 @@ public class AdminController {
         DefaultTableModel tableModel = view.getTableModel();
         tableModel.setRowCount(0);
         for (Object[] row : adminDAO.getAllStudents()) {
+            tableModel.addRow(row);
+        }
+    }
+
+    public void refreshLecturerTable() {
+        DefaultTableModel tableModel = view.getTableModel();
+        tableModel.setRowCount(0);
+        for (Object[] row : adminDAO.getAllLecturers()) {
             tableModel.addRow(row);
         }
     }
