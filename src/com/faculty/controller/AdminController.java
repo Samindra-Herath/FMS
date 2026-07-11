@@ -30,16 +30,30 @@ public class AdminController {
     private void initActionButtons() {
         view.getBtnAdd().addActionListener(e -> {
             if ("Students".equals(currentTab)) {
+                JTextField txtUser = new JTextField();
+                JTextField txtPass = new JPasswordField();
                 JTextField txtName = new JTextField();
                 JTextField txtReg = new JTextField();
                 JTextField txtDegreeId = new JTextField("1");
                 JTextField txtEmail = new JTextField();
                 JTextField txtMobile = new JTextField();
-                Object[] message = { "Full Name:", txtName, "Registration ID:", txtReg, "Degree ID:", txtDegreeId, "Email:", txtEmail, "Mobile:", txtMobile };
+                Object[] message = {
+                        "System Username:", txtUser,
+                        "System Password:", txtPass,
+                        "Full Name:", txtName,
+                        "Registration ID:", txtReg,
+                        "Degree ID:", txtDegreeId,
+                        "Email:", txtEmail,
+                        "Mobile:", txtMobile
+                };
 
-                if (JOptionPane.showConfirmDialog(view, message, "Add Student", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+                if (JOptionPane.showConfirmDialog(view, message, "Add New Student Profile", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
                     try {
-                        Object[] data = { txtName.getText(), txtReg.getText(), Integer.parseInt(txtDegreeId.getText()), txtEmail.getText(), txtMobile.getText() };
+                        Object[] data = {
+                                txtUser.getText(), txtPass.getText(),
+                                txtName.getText(), txtReg.getText(),
+                                Integer.parseInt(txtDegreeId.getText()), txtEmail.getText(), txtMobile.getText()
+                        };
                         adminDAO.addRecord("Students", data);
                         refreshStudentTable();
                     } catch (NumberFormatException ex) { JOptionPane.showMessageDialog(view, "Invalid Degree ID."); }
@@ -103,7 +117,6 @@ public class AdminController {
                 }
             }
 
-            // add department
             else if ("Departments".equals(currentTab)) {
                 JTextField txtName = new JTextField();
                 JTextField txtHod = new JTextField();
@@ -134,7 +147,6 @@ public class AdminController {
                 }
             }
 
-            // add degree
             else if ("Degrees".equals(currentTab)) {
                 JTextField txtName = new JTextField();
                 JTextField txtDeptId = new JTextField("1");
@@ -249,7 +261,6 @@ public class AdminController {
                 }
             }
 
-            // edit department
             else if ("Departments".equals(currentTab)) {
                 int selectedRow = view.getTblData().getSelectedRow();
                 if (selectedRow == -1) { JOptionPane.showMessageDialog(view, "Select a department row to edit."); return; }
@@ -285,7 +296,6 @@ public class AdminController {
                 }
             }
 
-            // edit degree
             else if ("Degrees".equals(currentTab)) {
                 int selectedRow = view.getTblData().getSelectedRow();
                 if (selectedRow == -1) { JOptionPane.showMessageDialog(view, "Select a degree row to edit."); return; }
@@ -324,7 +334,7 @@ public class AdminController {
                 int selectedRow = view.getTblData().getSelectedRow();
                 if (selectedRow == -1) { JOptionPane.showMessageDialog(view, "Select a row to delete."); return; }
                 int studentId = (int) view.getTableModel().getValueAt(selectedRow, 0);
-                if (JOptionPane.showConfirmDialog(view, "Delete this student row?", "Confirm", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+                if (JOptionPane.showConfirmDialog(view, "Permanently wipe this Student record along with credential accounts?", "Confirm Destructive Action", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
                     adminDAO.deleteRecord("Students", String.valueOf(studentId));
                     refreshStudentTable();
                 }
@@ -350,7 +360,6 @@ public class AdminController {
                 }
             }
 
-            // delete department
             else if ("Departments".equals(currentTab)) {
                 int selectedRow = view.getTblData().getSelectedRow();
                 if (selectedRow == -1) { JOptionPane.showMessageDialog(view, "Select a department row to delete."); return; }
@@ -361,7 +370,6 @@ public class AdminController {
                 }
             }
 
-            // delete degree
             else if ("Degrees".equals(currentTab)) {
                 int selectedRow = view.getTblData().getSelectedRow();
                 if (selectedRow == -1) { JOptionPane.showMessageDialog(view, "Select a degree row to delete."); return; }
@@ -407,7 +415,6 @@ public class AdminController {
         }
     }
 
-    // refresh department
     public void refreshDepartmentTable() {
         DefaultTableModel tableModel = view.getTableModel();
         tableModel.setRowCount(0);
@@ -416,7 +423,6 @@ public class AdminController {
         }
     }
 
-    // refresh degree
     public void refreshDegreeTable() {
         DefaultTableModel tableModel = view.getTableModel();
         tableModel.setRowCount(0);

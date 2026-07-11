@@ -120,16 +120,41 @@ public class AdminDAO {
 
     public boolean addRecord(String table, Object[] data) {
         if ("Students".equals(table)) {
-            String sql = "INSERT INTO students (full_name, student_reg_id, degree_id, email, mobile) VALUES (?, ?, ?, ?, ?)";
-            try (Connection conn = DatabaseConnection.getConnection();
-                 PreparedStatement stmt = conn.prepareStatement(sql)) {
-                stmt.setString(1, (String) data[0]);
-                stmt.setString(2, (String) data[1]);
-                stmt.setInt(3, (Integer) data[2]);
-                stmt.setString(4, (String) data[3]);
-                stmt.setString(5, (String) data[4]);
-                return stmt.executeUpdate() > 0;
-            } catch (Exception e) { e.printStackTrace(); }
+            String userSql = "INSERT INTO users (username, password, role) VALUES (?, ?, 'Student')";
+            String studentSql = "INSERT INTO students (student_id, full_name, student_reg_id, degree_id, email, mobile) VALUES (?, ?, ?, ?, ?, ?)";
+            Connection conn = null;
+            try {
+                conn = DatabaseConnection.getConnection();
+                conn.setAutoCommit(false);
+
+                try (PreparedStatement stmt1 = conn.prepareStatement(userSql, PreparedStatement.RETURN_GENERATED_KEYS)) {
+                    stmt1.setString(1, (String) data[0]);
+                    stmt1.setString(2, (String) data[1]);
+                    stmt1.executeUpdate();
+
+                    ResultSet rs = stmt1.getGeneratedKeys();
+                    if (rs.next()) {
+                        int generatedUserId = rs.getInt(1);
+
+                        try (PreparedStatement stmt2 = conn.prepareStatement(studentSql)) {
+                            stmt2.setInt(1, generatedUserId);
+                            stmt2.setString(2, (String) data[2]);
+                            stmt2.setString(3, (String) data[3]);
+                            stmt2.setInt(4, (Integer) data[4]);
+                            stmt2.setString(5, (String) data[5]);
+                            stmt2.setString(6, (String) data[6]);
+                            stmt2.executeUpdate();
+                        }
+                    }
+                }
+                conn.commit();
+                return true;
+            } catch (Exception e) {
+                if (conn != null) { try { conn.rollback(); } catch (Exception ex) { ex.printStackTrace(); } }
+                e.printStackTrace();
+            } finally {
+                if (conn != null) { try { conn.close(); } catch (Exception ex) { ex.printStackTrace(); } }
+            }
         }
 
         if ("Lecturers".equals(table)) {
@@ -285,12 +310,30 @@ public class AdminDAO {
 
     public boolean deleteRecord(String table, String identifier) {
         if ("Students".equals(table)) {
-            String sql = "DELETE FROM students WHERE student_id = ?";
-            try (Connection conn = DatabaseConnection.getConnection();
-                 PreparedStatement stmt = conn.prepareStatement(sql)) {
-                stmt.setInt(1, Integer.parseInt(identifier));
-                return stmt.executeUpdate() > 0;
-            } catch (Exception e) { e.printStackTrace(); }
+            int targetId = Integer.parseInt(identifier);
+            String deleteStudent = "DELETE FROM students WHERE student_id = ?";
+            String deleteUser = "DELETE FROM users WHERE user_id = ?";
+            Connection conn = null;
+            try {
+                conn = DatabaseConnection.getConnection();
+                conn.setAutoCommit(false);
+
+                try (PreparedStatement stmt1 = conn.prepareStatement(deleteStudent)) {
+                    stmt1.setInt(1, targetId);
+                    stmt1.executeUpdate();
+                }
+                try (PreparedStatement stmt2 = conn.prepareStatement(deleteUser)) {
+                    stmt2.setInt(1, targetId);
+                    stmt2.executeUpdate();
+                }
+                conn.commit();
+                return true;
+            } catch (Exception e) {
+                if (conn != null) { try { conn.rollback(); } catch (Exception ex) { ex.printStackTrace(); } }
+                e.printStackTrace();
+            } finally {
+                if (conn != null) { try { conn.close(); } catch (Exception ex) { ex.printStackTrace(); } }
+            }
         }
 
         if ("Lecturers".equals(table)) {

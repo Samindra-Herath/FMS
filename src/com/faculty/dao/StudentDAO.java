@@ -12,9 +12,10 @@ import java.util.List;
 public class StudentDAO {
 
     public Student getStudentProfile(String username) {
-        String sql = "SELECT s.student_id, s.full_name, s.student_reg_id, d.degree_name, s.email, s.mobile " +
-                "FROM students s " +
-                "JOIN users u ON s.student_id = u.user_id " +
+        // Changed to LEFT JOIN from users so a profile loads even if it's new/empty
+        String sql = "SELECT u.user_id, s.full_name, s.student_reg_id, d.degree_name, s.email, s.mobile " +
+                "FROM users u " +
+                "LEFT JOIN students s ON u.user_id = s.student_id " +
                 "LEFT JOIN degrees d ON s.degree_id = d.degree_id " +
                 "WHERE u.username = ?";
         try (Connection conn = DatabaseConnection.getConnection();
@@ -23,12 +24,12 @@ public class StudentDAO {
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     return new Student(
-                            rs.getInt("student_id"),
-                            rs.getString("full_name"),
-                            rs.getString("student_reg_id"),
+                            rs.getInt("user_id"),
+                            rs.getString("full_name") != null ? rs.getString("full_name") : "",
+                            rs.getString("student_reg_id") != null ? rs.getString("student_reg_id") : "",
                             rs.getString("degree_name") != null ? rs.getString("degree_name") : "Not Assigned",
-                            rs.getString("email"),
-                            rs.getString("mobile")
+                            rs.getString("email") != null ? rs.getString("email") : "",
+                            rs.getString("mobile") != null ? rs.getString("mobile") : ""
                     );
                 }
             }
@@ -38,20 +39,52 @@ public class StudentDAO {
         return null;
     }
 
-    public boolean updateStudentProfile(Student student) {
-        String sql = "UPDATE students SET full_name=?, student_reg_id=?, email=?, mobile=? WHERE student_id=?";
+    // Safely handles both UPDATE for existing and INSERT for newly registered accounts
+    public boolean updateStudentProfile(String username, String fullName, String regId, String email, String mobile) {
+        String checkSql = "SELECT user_id FROM users WHERE username = ?";
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, student.getFullName());
-            stmt.setString(2, student.getStudentRegId());
-            stmt.setString(3, student.getEmail());
-            stmt.setString(4, student.getMobileNumber());
-            stmt.setInt(5, student.getStudentId());
-            return stmt.executeUpdate() > 0;
+             PreparedStatement checkUserStmt = conn.prepareStatement(checkSql)) {
+
+            checkUserStmt.setString(1, username);
+            ResultSet rsUser = checkUserStmt.executeQuery();
+
+            if (rsUser.next()) {
+                int userId = rsUser.getInt("user_id");
+
+                String checkStudentSql = "SELECT student_id FROM students WHERE student_id = ?";
+                try (PreparedStatement checkStudentStmt = conn.prepareStatement(checkStudentSql)) {
+                    checkStudentStmt.setInt(1, userId);
+                    ResultSet rsStudent = checkStudentStmt.executeQuery();
+
+                    if (rsStudent.next()) {
+                        // Profile exists -> Execute standard UPDATE
+                        String updateSql = "UPDATE students SET full_name=?, student_reg_id=?, email=?, mobile=? WHERE student_id=?";
+                        try (PreparedStatement updateStmt = conn.prepareStatement(updateSql)) {
+                            updateStmt.setString(1, fullName);
+                            updateStmt.setString(2, regId);
+                            updateStmt.setString(3, email);
+                            updateStmt.setString(4, mobile);
+                            updateStmt.setInt(5, userId);
+                            return updateStmt.executeUpdate() > 0;
+                        }
+                    } else {
+                        // New signup Profile -> Execute INSERT
+                        String insertSql = "INSERT INTO students (student_id, full_name, student_reg_id, email, mobile) VALUES (?, ?, ?, ?, ?)";
+                        try (PreparedStatement insertStmt = conn.prepareStatement(insertSql)) {
+                            insertStmt.setInt(1, userId);
+                            insertStmt.setString(2, fullName);
+                            insertStmt.setString(3, regId);
+                            insertStmt.setString(4, email);
+                            insertStmt.setString(5, mobile);
+                            return insertStmt.executeUpdate() > 0;
+                        }
+                    }
+                }
+            }
         } catch (Exception e) {
             e.printStackTrace();
-            return false;
         }
+        return false;
     }
 
     public List<Course> getEnrolledCourses(String username) {

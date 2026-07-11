@@ -57,23 +57,19 @@ public class LoginView extends JFrame {
         add(rbStudent);
         add(rbLecturer);
 
-        // Sign In Button (shifted slightly left)
         btnSignIn = new JButton("Sign In");
         btnSignIn.setBounds(80, 210, 100, 35);
         add(btnSignIn);
 
-        // Sign Up Button (placed on the right)
         btnSignUp = new JButton("Sign Up");
         btnSignUp.setBounds(200, 210, 100, 35);
         add(btnSignUp);
 
-        // Event Listeners
         btnSignIn.addActionListener(e -> executeAuthentication());
 
         btnSignUp.addActionListener(e -> {
-            // Check if you renamed your signup file to SignupView or kept it as SignupGUI
             new SignupGUI().setVisible(true);
-            dispose(); // Close this login window
+            dispose();
         });
     }
 
@@ -81,6 +77,7 @@ public class LoginView extends JFrame {
         String username = txtUsername.getText();
         String password = new String(txtPassword.getPassword());
         String role = "Student";
+
         if (rbAdmin.isSelected()) role = "Admin";
         else if (rbLecturer.isSelected()) role = "Lecturer";
 
@@ -92,18 +89,16 @@ public class LoginView extends JFrame {
                 new StudentDashboardView(username).setVisible(true);
                 dispose();
             } else if (role.equals("Lecturer")) {
-                // --- FIXED USERNAME HERE ---
                 com.faculty.view.LecturerDashboardView lecturerView = new com.faculty.view.LecturerDashboardView(username);
                 com.faculty.dao.LecturerDAO lecturerDao = new com.faculty.dao.LecturerDAO();
                 new com.faculty.controller.LecturerController(lecturerView, lecturerDao, username);
-
                 lecturerView.setVisible(true);
+                dispose();
+            } else if (role.equals("Admin")) {
+                new AdminDashboardView(username).setVisible(true);
                 dispose();
             } else {
                 JOptionPane.showMessageDialog(this, "Module operational for Students only in current iteration.");
-            } else if(role.equals("Admin")) {
-                new AdminDashboardView(username).setVisible(true);
-                dispose();
             }
         } else {
             JOptionPane.showMessageDialog(this, "Access Denied: Invalid parameters matched.", "Auth Error", JOptionPane.ERROR_MESSAGE);

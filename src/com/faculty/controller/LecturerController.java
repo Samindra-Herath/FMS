@@ -11,7 +11,6 @@ public class LecturerController {
     private LecturerDashboardView view;
     private LecturerDAO dao;
     private String username;
-    private Lecturer currentLecturer;
 
     public LecturerController(LecturerDashboardView view, LecturerDAO dao, String username) {
         this.view = view;
@@ -23,38 +22,41 @@ public class LecturerController {
     }
 
     private void loadLecturerData() {
-        currentLecturer = dao.getLecturerProfile(username);
+        Lecturer currentLecturer = dao.getLecturerProfile(username);
 
         if (currentLecturer != null) {
             view.setFullName(currentLecturer.getFullName());
             view.setDepartment(currentLecturer.getDepartmentName());
             view.setEmail(currentLecturer.getEmail());
-            view.setMobile(currentLecturer.getMobile()); // Note: Make sure your Lecturer model has this getter or match it to your model fields
+            view.setMobile(currentLecturer.getMobile());
+        }
 
-            List<Course> courses = dao.getTeachingCourses(username);
-            view.getTableModel().setRowCount(0);
-            for (Course c : courses) {
-                view.getTableModel().addRow(new Object[]{
-                        c.getCourseCode(),
-                        c.getCourseName(),
-                        c.getCredits()
-                });
-            }
+        // Load courses independently so they display even if the profile details are incomplete
+        List<Course> courses = dao.getTeachingCourses(username);
+        view.getTableModel().setRowCount(0);
+        for (Course c : courses) {
+            view.getTableModel().addRow(new Object[]{
+                    c.getCourseCode(),
+                    c.getCourseName(),
+                    c.getCredits()
+            });
         }
     }
 
     private void handleProfileUpdate() {
-        if (currentLecturer == null) return;
+        // Read directly from the view text fields instead of relying on the model variable
+        String newName = view.getFullName();
+        String newEmail = view.getEmail();
+        String newMobile = view.getMobile();
 
-        currentLecturer.setFullName(view.getFullName());
-        currentLecturer.setEmail(view.getEmail());
-        currentLecturer.setMobile(view.getMobile()); // Note: Match to your model setter name
+        // Pass the raw data to the DAO so it can handle Inserts or Updates automatically
+        boolean success = dao.updateLecturerProfile(username, newName, newEmail, newMobile);
 
-        boolean success = dao.updateLecturerProfile(currentLecturer);
         if (success) {
-            JOptionPane.showMessageDialog(view, "Profile updated successfully!");
+            JOptionPane.showMessageDialog(view, "Profile details saved successfully!");
+            loadLecturerData(); // Refresh the screen
         } else {
-            JOptionPane.showMessageDialog(view, "Failed to update profile.", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(view, "Failed to update profile.", "Database Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 }
