@@ -91,6 +91,16 @@ public class LoginView extends JFrame {
             if (role.equals("Student")) {
                 new StudentDashboardView(username).setVisible(true);
                 dispose();
+            } else if (role.equals("Lecturer")) {
+                // --- FIXED USERNAME HERE ---
+                com.faculty.view.LecturerDashboardView lecturerView = new com.faculty.view.LecturerDashboardView(username);
+                com.faculty.dao.LecturerDAO lecturerDao = new com.faculty.dao.LecturerDAO();
+                new com.faculty.controller.LecturerController(lecturerView, lecturerDao, username);
+
+                lecturerView.setVisible(true);
+                dispose();
+            } else {
+                JOptionPane.showMessageDialog(this, "Module operational for Students only in current iteration.");
             } else if(role.equals("Admin")) {
                 new AdminDashboardView(username).setVisible(true);
                 dispose();
