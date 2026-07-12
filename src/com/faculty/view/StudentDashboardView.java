@@ -16,6 +16,7 @@ public class StudentDashboardView extends JFrame {
 
     // Form Reference Components
     private JTextField txtName, txtRegId, txtDegree, txtEmail, txtMobile;
+    private Student activeStudentProfile;
 
     public StudentDashboardView(String username) {
         this.loggedInUser = username;
@@ -131,28 +132,28 @@ public class StudentDashboardView extends JFrame {
     }
 
     private void refreshProfileData() {
-        Student activeStudentProfile = studentDAO.getStudentProfile(loggedInUser);
+        activeStudentProfile = studentDAO.getStudentProfile(loggedInUser);
         if (activeStudentProfile != null) {
-            txtName.setText(activeStudentProfile.getFullName() != null ? activeStudentProfile.getFullName() : "");
-            txtRegId.setText(activeStudentProfile.getStudentRegId() != null ? activeStudentProfile.getStudentRegId() : "");
-            txtDegree.setText(activeStudentProfile.getDegreeName() != null ? activeStudentProfile.getDegreeName() : "Not Assigned");
-            txtEmail.setText(activeStudentProfile.getEmail() != null ? activeStudentProfile.getEmail() : "");
-            txtMobile.setText(activeStudentProfile.getMobileNumber() != null ? activeStudentProfile.getMobileNumber() : "");
+            txtName.setText(activeStudentProfile.getFullName());
+            txtRegId.setText(activeStudentProfile.getStudentRegId());
+            txtDegree.setText(activeStudentProfile.getDegreeName());
+            txtEmail.setText(activeStudentProfile.getEmail());
+            txtMobile.setText(activeStudentProfile.getMobileNumber());
         }
     }
 
     private void saveProfileModifications() {
-        // Read directly from text fields to bypass null model check
-        String newName = txtName.getText();
-        String newRegId = txtRegId.getText();
-        String newEmail = txtEmail.getText();
-        String newMobile = txtMobile.getText();
+        if (activeStudentProfile != null) {
+            activeStudentProfile.setFullName(txtName.getText());
+            activeStudentProfile.setStudentRegId(txtRegId.getText());
+            activeStudentProfile.setEmail(txtEmail.getText());
+            activeStudentProfile.setMobileNumber(txtMobile.getText());
 
-        if (studentDAO.updateStudentProfile(loggedInUser, newName, newRegId, newEmail, newMobile)) {
-            JOptionPane.showMessageDialog(this, "Profile state updated successfully.");
-            refreshProfileData();
-        } else {
-            JOptionPane.showMessageDialog(this, "Error: Data writing failed.", "Database Error", JOptionPane.ERROR_MESSAGE);
+            if (studentDAO.updateStudentProfile(activeStudentProfile)) {
+                JOptionPane.showMessageDialog(this, "Profile state updated successfully.");
+            } else {
+                JOptionPane.showMessageDialog(this, "Error: Data writing failed.", "Database Error", JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
 
