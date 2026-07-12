@@ -18,6 +18,12 @@ public class LecturerController {
         this.dao = dao;
         this.username = username;
 
+        // Automatically sync and check if the profile exists when logging in
+        Lecturer profileCheck = this.dao.getLecturerProfile(username);
+        if (profileCheck == null) {
+            this.dao.createNewLecturerProfile(username);
+        }
+
         loadLecturerData();
         this.view.getBtnSaveProfile().addActionListener(e -> handleProfileUpdate());
     }
@@ -29,7 +35,7 @@ public class LecturerController {
             view.setFullName(currentLecturer.getFullName());
             view.setDepartment(currentLecturer.getDepartmentName());
             view.setEmail(currentLecturer.getEmail());
-            view.setMobile(currentLecturer.getMobile()); // Note: Make sure your Lecturer model has this getter or match it to your model fields
+            view.setMobile(currentLecturer.getMobile());
 
             List<Course> courses = dao.getTeachingCourses(username);
             view.getTableModel().setRowCount(0);
@@ -44,15 +50,19 @@ public class LecturerController {
     }
 
     private void handleProfileUpdate() {
-        if (currentLecturer == null) return;
+        if (currentLecturer == null) {
+            currentLecturer = dao.getLecturerProfile(username);
+            if (currentLecturer == null) return;
+        }
 
         currentLecturer.setFullName(view.getFullName());
         currentLecturer.setEmail(view.getEmail());
-        currentLecturer.setMobile(view.getMobile()); // Note: Match to your model setter name
+        currentLecturer.setMobile(view.getMobile());
 
         boolean success = dao.updateLecturerProfile(currentLecturer);
         if (success) {
             JOptionPane.showMessageDialog(view, "Profile updated successfully!");
+            loadLecturerData(); // Safely refresh fields on the UI screen
         } else {
             JOptionPane.showMessageDialog(view, "Failed to update profile.", "Error", JOptionPane.ERROR_MESSAGE);
         }
