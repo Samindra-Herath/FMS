@@ -100,7 +100,6 @@ public class LoginView extends JFrame {
                 lecturerView.setVisible(true);
                 dispose();
 
-            }else {
                 JOptionPane.showMessageDialog(this, "Module operational for Students only in current iteration.");
             } else if(role.equals("Admin")) {
                 new AdminDashboardView(username).setVisible(true);
