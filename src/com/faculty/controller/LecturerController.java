@@ -11,6 +11,7 @@ public class LecturerController {
     private LecturerDashboardView view;
     private LecturerDAO dao;
     private String username;
+    private Lecturer currentLecturer;
 
     public LecturerController(LecturerDashboardView view, LecturerDAO dao, String username) {
         this.view = view;
@@ -28,7 +29,7 @@ public class LecturerController {
     }
 
     private void loadLecturerData() {
-        Lecturer currentLecturer = dao.getLecturerProfile(username);
+        currentLecturer = dao.getLecturerProfile(username);
 
         if (currentLecturer != null) {
             view.setFullName(currentLecturer.getFullName());
@@ -58,11 +59,12 @@ public class LecturerController {
         currentLecturer.setEmail(view.getEmail());
         currentLecturer.setMobile(view.getMobile());
 
+        boolean success = dao.updateLecturerProfile(currentLecturer);
         if (success) {
             JOptionPane.showMessageDialog(view, "Profile updated successfully!");
             loadLecturerData(); // Safely refresh fields on the UI screen
         } else {
-            JOptionPane.showMessageDialog(view, "Failed to update profile.", "Database Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(view, "Failed to update profile.", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 }
