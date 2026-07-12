@@ -37,9 +37,36 @@ public class LecturerDAO {
         return null;
     }
 
-    // 2. Safely Update or Insert Profile Details
-    public boolean updateLecturerProfile(String username, String fullName, String email, String mobile) {
-        String checkSql = "SELECT lecturer_id FROM lecturers WHERE username = ?";
+    // 💡 NEW METHOD: Safely links to the master user record and generates the missing profile dynamically
+    public boolean createNewLecturerProfile(String username) {
+        String findUserIdSql = "SELECT user_id FROM users WHERE username = ? AND role = 'Lecturer'";
+        String insertLecturerSql = "INSERT INTO lecturers (lecturer_id, username, password, full_name, dept_id, email, mobile) VALUES (?, ?, '123', ?, 1, '', '')";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmtFind = conn.prepareStatement(findUserIdSql)) {
+
+            stmtFind.setString(1, username);
+            try (ResultSet rs = stmtFind.executeQuery()) {
+                if (rs.next()) {
+                    int userId = rs.getInt("user_id");
+
+                    try (PreparedStatement stmtInsert = conn.prepareStatement(insertLecturerSql)) {
+                        stmtInsert.setInt(1, userId);
+                        stmtInsert.setString(2, username);
+                        stmtInsert.setString(3, username); // Default fullname set as the username initial identifier
+                        return stmtInsert.executeUpdate() > 0;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    // 2. Update Profile Details
+    public boolean updateLecturerProfile(Lecturer lecturer) {
+        String sql = "UPDATE lecturers SET full_name=?, email=?, mobile=? WHERE lecturer_id=?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement checkStmt = conn.prepareStatement(checkSql)) {
 

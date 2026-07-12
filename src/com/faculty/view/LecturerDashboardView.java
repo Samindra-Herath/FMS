@@ -99,15 +99,18 @@ public class LecturerDashboardView extends JFrame {
 
         JLabel lblName = new JLabel("Full Name:");
         lblName.setBounds(40, startY, 120, 25); panel.add(lblName);
-        txtName = new JTextField(); txtName.setBounds(200, startY, 320, 25); panel.add(txtName);
+        txtName = new JTextField(); txtName.setBounds(200, startY, 320, 25);
+        panel.add(txtName);
 
         JLabel lblDeptLabel = new JLabel("Department:");
         lblDeptLabel.setBounds(40, startY + spacingY, 120, 25); panel.add(lblDeptLabel);
-        txtDept = new JTextField(); txtDept.setBounds(200, startY + spacingY, 320, 25); txtDept.setEditable(false); panel.add(txtDept);
+        txtDept = new JTextField(); txtDept.setBounds(200, startY + spacingY, 320, 25);
+        txtDept.setEditable(false); panel.add(txtDept);
 
         JLabel lblEmail = new JLabel("Email Address:");
         lblEmail.setBounds(40, startY + (spacingY * 2), 120, 25); panel.add(lblEmail);
-        txtEmail = new JTextField(); txtEmail.setBounds(200, startY + (spacingY * 2), 320, 25); panel.add(txtEmail);
+        txtEmail = new JTextField(); txtEmail.setBounds(200, startY + (spacingY * 2), 320, 25);
+        panel.add(txtEmail);
 
         JLabel lblMobile = new JLabel("Mobile Number:");
         lblMobile.setBounds(40, startY + (spacingY * 3), 120, 25); panel.add(lblMobile);
@@ -170,43 +173,56 @@ public class LecturerDashboardView extends JFrame {
 
     // Encapsulation Getters for Controller interaction
     public JButton getBtnProfileMenu() {
+
         return btnProfileMenu;
     }
     public JButton getBtnTimetableMenu() {
+
         return btnTimetableMenu;
     }
     public JButton getBtnCoursesMenu() {
+
         return btnCoursesMenu;
     }
     public CardLayout getCardLayout() {
+
         return cardLayout;
     }
     public JPanel getMainWorkspace() {
+
         return mainWorkspace;
     }
 
     public String getFullName() {
+
         return txtName.getText();
     }
     public void setFullName(String val) {
+
         txtName.setText(val);
     }
     public String getEmail() {
+
         return txtEmail.getText();
     }
     public void setEmail(String val) {
+
         txtEmail.setText(val);
     }
     public String getMobile() {
+
         return txtMobile.getText();
     }
     public void setMobile(String val) {
+
         txtMobile.setText(val);
     }
     public void setDepartment(String val) {
+
         txtDept.setText(val);
     }
     public JButton getBtnSaveProfile() {
+
         return btnSaveProfile;
     }
     public DefaultTableModel getTableModel() {
