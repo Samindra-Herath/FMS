@@ -13,7 +13,7 @@ public class Lecturer {
         this.departmentName = departmentName;
         this.email = email;
         this.mobileNumber = mobileNumber;
-}
+    }
     public int getLecturerId() {
         return lecturerId;
     }
@@ -26,21 +26,27 @@ public class Lecturer {
         this.fullName = fullName;
     }
     public String getDepartmentName() {
+
         return departmentName;
     }
     public void setDepartmentName(String departmentName) {
+
         this.departmentName = departmentName;
     }
     public String getEmail() {
+
         return email;
     }
     public void setEmail(String email) {
+
         this.email = email;
     }
     public String getMobile() {
+
         return mobileNumber;
     }
     public void setMobile(String mobileNumber) {
+
         this.mobileNumber = mobileNumber;
     }
 }
