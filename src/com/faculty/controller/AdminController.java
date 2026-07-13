@@ -23,23 +23,37 @@ public class AdminController {
         view.getBtnStudents().addActionListener(e -> { currentTab = "Students"; view.updateTabHeaders("Students"); refreshStudentTable(); });
         view.getBtnLecturers().addActionListener(e -> { currentTab = "Lecturers"; view.updateTabHeaders("Lecturers"); refreshLecturerTable(); });
         view.getBtnCourses().addActionListener(e -> { currentTab = "Courses"; view.updateTabHeaders("Courses"); refreshCourseTable(); });
-        view.getBtnDepartments().addActionListener(e -> { currentTab = "Departments"; view.updateTabHeaders("Departments"); view.getTableModel().setRowCount(0); });
-        view.getBtnDegrees().addActionListener(e -> { currentTab = "Degrees"; view.updateTabHeaders("Degrees"); view.getTableModel().setRowCount(0); });
+        view.getBtnDepartments().addActionListener(e -> { currentTab = "Departments"; view.updateTabHeaders("Departments"); refreshDepartmentTable(); });
+        view.getBtnDegrees().addActionListener(e -> { currentTab = "Degrees"; view.updateTabHeaders("Degrees"); refreshDegreeTable(); });
     }
 
     private void initActionButtons() {
         view.getBtnAdd().addActionListener(e -> {
             if ("Students".equals(currentTab)) {
+                JTextField txtUser = new JTextField();
+                JTextField txtPass = new JPasswordField();
                 JTextField txtName = new JTextField();
                 JTextField txtReg = new JTextField();
                 JTextField txtDegreeId = new JTextField("1");
                 JTextField txtEmail = new JTextField();
                 JTextField txtMobile = new JTextField();
-                Object[] message = { "Full Name:", txtName, "Registration ID:", txtReg, "Degree ID:", txtDegreeId, "Email:", txtEmail, "Mobile:", txtMobile };
+                Object[] message = {
+                        "System Username:", txtUser,
+                        "System Password:", txtPass,
+                        "Full Name:", txtName,
+                        "Registration ID:", txtReg,
+                        "Degree ID:", txtDegreeId,
+                        "Email:", txtEmail,
+                        "Mobile:", txtMobile
+                };
 
-                if (JOptionPane.showConfirmDialog(view, message, "Add Student", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+                if (JOptionPane.showConfirmDialog(view, message, "Add New Student Profile", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
                     try {
-                        Object[] data = { txtName.getText(), txtReg.getText(), Integer.parseInt(txtDegreeId.getText()), txtEmail.getText(), txtMobile.getText() };
+                        Object[] data = {
+                                txtUser.getText(), txtPass.getText(),
+                                txtName.getText(), txtReg.getText(),
+                                Integer.parseInt(txtDegreeId.getText()), txtEmail.getText(), txtMobile.getText()
+                        };
                         adminDAO.addRecord("Students", data);
                         refreshStudentTable();
                     } catch (NumberFormatException ex) { JOptionPane.showMessageDialog(view, "Invalid Degree ID."); }
@@ -75,7 +89,6 @@ public class AdminController {
                 }
             }
 
-            // ADD COURSE DIALOGUE
             else if ("Courses".equals(currentTab)) {
                 JTextField txtCourseCode = new JTextField();
                 JTextField txtCourseName = new JTextField();
@@ -101,6 +114,63 @@ public class AdminController {
                         adminDAO.addRecord("Courses", data);
                         refreshCourseTable();
                     } catch (NumberFormatException ex) { JOptionPane.showMessageDialog(view, "Invalid numeric input fields for Credits or Lecturer ID."); }
+                }
+            }
+
+            else if ("Departments".equals(currentTab)) {
+                JTextField txtName = new JTextField();
+                JTextField txtHod = new JTextField();
+                JTextField txtDegreeId = new JTextField("1");
+                JTextField txtStaffCount = new JTextField();
+
+                Object[] message = {
+                        "Department Name:", txtName,
+                        "Head of Department:", txtHod,
+                        "Linked Degree ID:", txtDegreeId,
+                        "Staff Count:", txtStaffCount
+                };
+
+                if (JOptionPane.showConfirmDialog(view, message, "Add New Department", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+                    try {
+                        Object[] data = {
+                                txtName.getText(),
+                                txtHod.getText(),
+                                Integer.parseInt(txtDegreeId.getText().trim()),
+                                Integer.parseInt(txtStaffCount.getText().trim())
+                        };
+                        adminDAO.addRecord("Departments", data);
+                        refreshDepartmentTable();
+                        JOptionPane.showMessageDialog(view, "✅ Department added!");
+                    } catch (NumberFormatException ex) {
+                        JOptionPane.showMessageDialog(view, "❌ Invalid input. Degree ID and Staff Count must be numbers.");
+                    }
+                }
+            }
+
+            else if ("Degrees".equals(currentTab)) {
+                JTextField txtName = new JTextField();
+                JTextField txtDeptId = new JTextField("1");
+                JTextField txtStudentCount = new JTextField();
+
+                Object[] message = {
+                        "Degree Name:", txtName,
+                        "Linked Department ID:", txtDeptId,
+                        "Student Count:", txtStudentCount
+                };
+
+                if (JOptionPane.showConfirmDialog(view, message, "Add New Degree", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+                    try {
+                        Object[] data = {
+                                txtName.getText(),
+                                Integer.parseInt(txtDeptId.getText().trim()),
+                                Integer.parseInt(txtStudentCount.getText().trim())
+                        };
+                        adminDAO.addRecord("Degrees", data);
+                        refreshDegreeTable();
+                        JOptionPane.showMessageDialog(view, "✅ Degree added!");
+                    } catch (NumberFormatException ex) {
+                        JOptionPane.showMessageDialog(view, "❌ Invalid input. Department ID and Student Count must be numbers.");
+                    }
                 }
             }
         });
@@ -158,7 +228,6 @@ public class AdminController {
                 }
             }
 
-            // EDIT COURSE DIALOGUE
             else if ("Courses".equals(currentTab)) {
                 int selectedRow = view.getTblData().getSelectedRow();
                 if (selectedRow == -1) { JOptionPane.showMessageDialog(view, "Please select a course row to edit."); return; }
@@ -191,6 +260,73 @@ public class AdminController {
                     } catch (NumberFormatException ex) { JOptionPane.showMessageDialog(view, "Invalid numeric formatting inputs."); }
                 }
             }
+
+            else if ("Departments".equals(currentTab)) {
+                int selectedRow = view.getTblData().getSelectedRow();
+                if (selectedRow == -1) { JOptionPane.showMessageDialog(view, "Select a department row to edit."); return; }
+
+                int deptId = (int) view.getTableModel().getValueAt(selectedRow, 0);
+                JTextField txtName = new JTextField(view.getTableModel().getValueAt(selectedRow, 1).toString());
+                JTextField txtHod = new JTextField(view.getTableModel().getValueAt(selectedRow, 2) != null ? view.getTableModel().getValueAt(selectedRow, 2).toString() : "");
+                JTextField txtDegreeId = new JTextField("1");
+                JTextField txtStaffCount = new JTextField(view.getTableModel().getValueAt(selectedRow, 4).toString());
+
+                Object[] message = {
+                        "Department Name:", txtName,
+                        "Head of Department:", txtHod,
+                        "New Degree ID:", txtDegreeId,
+                        "Staff Count:", txtStaffCount
+                };
+
+                if (JOptionPane.showConfirmDialog(view, message, "Edit Department", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+                    try {
+                        Object[] data = {
+                                txtName.getText(),
+                                txtHod.getText(),
+                                Integer.parseInt(txtDegreeId.getText().trim()),
+                                Integer.parseInt(txtStaffCount.getText().trim()),
+                                deptId
+                        };
+                        adminDAO.updateRecord("Departments", data);
+                        refreshDepartmentTable();
+                        JOptionPane.showMessageDialog(view, "✅ Department updated!");
+                    } catch (NumberFormatException ex) {
+                        JOptionPane.showMessageDialog(view, "❌ Invalid number format for Degree ID or Staff Count.");
+                    }
+                }
+            }
+
+            else if ("Degrees".equals(currentTab)) {
+                int selectedRow = view.getTblData().getSelectedRow();
+                if (selectedRow == -1) { JOptionPane.showMessageDialog(view, "Select a degree row to edit."); return; }
+
+                int degreeId = (int) view.getTableModel().getValueAt(selectedRow, 0);
+                JTextField txtName = new JTextField(view.getTableModel().getValueAt(selectedRow, 1).toString());
+                JTextField txtDeptId = new JTextField("1");
+                JTextField txtStudentCount = new JTextField(view.getTableModel().getValueAt(selectedRow, 3).toString());
+
+                Object[] message = {
+                        "Degree Name:", txtName,
+                        "New Department ID:", txtDeptId,
+                        "Student Count:", txtStudentCount
+                };
+
+                if (JOptionPane.showConfirmDialog(view, message, "Edit Degree", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+                    try {
+                        Object[] data = {
+                                txtName.getText(),
+                                Integer.parseInt(txtDeptId.getText().trim()),
+                                Integer.parseInt(txtStudentCount.getText().trim()),
+                                degreeId
+                        };
+                        adminDAO.updateRecord("Degrees", data);
+                        refreshDegreeTable();
+                        JOptionPane.showMessageDialog(view, "✅ Degree updated!");
+                    } catch (NumberFormatException ex) {
+                        JOptionPane.showMessageDialog(view, "❌ Invalid number format for Department ID or Student Count.");
+                    }
+                }
+            }
         });
 
         view.getBtnDelete().addActionListener(e -> {
@@ -198,7 +334,7 @@ public class AdminController {
                 int selectedRow = view.getTblData().getSelectedRow();
                 if (selectedRow == -1) { JOptionPane.showMessageDialog(view, "Select a row to delete."); return; }
                 int studentId = (int) view.getTableModel().getValueAt(selectedRow, 0);
-                if (JOptionPane.showConfirmDialog(view, "Delete this student row?", "Confirm", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+                if (JOptionPane.showConfirmDialog(view, "Permanently wipe this Student record along with credential accounts?", "Confirm Destructive Action", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
                     adminDAO.deleteRecord("Students", String.valueOf(studentId));
                     refreshStudentTable();
                 }
@@ -214,7 +350,6 @@ public class AdminController {
                 }
             }
 
-            // DELETE COURSE ACTION
             else if ("Courses".equals(currentTab)) {
                 int selectedRow = view.getTblData().getSelectedRow();
                 if (selectedRow == -1) { JOptionPane.showMessageDialog(view, "Please select a course row to delete."); return; }
@@ -224,12 +359,34 @@ public class AdminController {
                     refreshCourseTable();
                 }
             }
+
+            else if ("Departments".equals(currentTab)) {
+                int selectedRow = view.getTblData().getSelectedRow();
+                if (selectedRow == -1) { JOptionPane.showMessageDialog(view, "Select a department row to delete."); return; }
+                int deptId = (int) view.getTableModel().getValueAt(selectedRow, 0);
+                if (JOptionPane.showConfirmDialog(view, "Delete this department?", "Confirm", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+                    adminDAO.deleteRecord("Departments", String.valueOf(deptId));
+                    refreshDepartmentTable();
+                }
+            }
+
+            else if ("Degrees".equals(currentTab)) {
+                int selectedRow = view.getTblData().getSelectedRow();
+                if (selectedRow == -1) { JOptionPane.showMessageDialog(view, "Select a degree row to delete."); return; }
+                int degreeId = (int) view.getTableModel().getValueAt(selectedRow, 0);
+                if (JOptionPane.showConfirmDialog(view, "Delete this degree?", "Confirm", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+                    adminDAO.deleteRecord("Degrees", String.valueOf(degreeId));
+                    refreshDegreeTable();
+                }
+            }
         });
 
         view.getBtnSaveChanges().addActionListener(e -> {
             if ("Students".equals(currentTab)) refreshStudentTable();
             else if ("Lecturers".equals(currentTab)) refreshLecturerTable();
             else if ("Courses".equals(currentTab)) refreshCourseTable();
+            else if ("Departments".equals(currentTab)) refreshDepartmentTable();
+            else if ("Degrees".equals(currentTab)) refreshDegreeTable();
             JOptionPane.showMessageDialog(view, "Database perfectly synchronized with current view.");
         });
     }
@@ -250,11 +407,26 @@ public class AdminController {
         }
     }
 
-    // REFRESH TABLE UI VIEW
     public void refreshCourseTable() {
         DefaultTableModel tableModel = view.getTableModel();
         tableModel.setRowCount(0);
         for (Object[] row : adminDAO.getAllCourses()) {
+            tableModel.addRow(row);
+        }
+    }
+
+    public void refreshDepartmentTable() {
+        DefaultTableModel tableModel = view.getTableModel();
+        tableModel.setRowCount(0);
+        for (Object[] row : adminDAO.getAllDepartments()) {
+            tableModel.addRow(row);
+        }
+    }
+
+    public void refreshDegreeTable() {
+        DefaultTableModel tableModel = view.getTableModel();
+        tableModel.setRowCount(0);
+        for (Object[] row : adminDAO.getAllDegrees()) {
             tableModel.addRow(row);
         }
     }
