@@ -55,7 +55,6 @@ public class AdminDAO {
         return list;
     }
 
-    // READ ACCESS FOR COURSES
     public List<Object[]> getAllCourses() {
         List<Object[]> list = new ArrayList<>();
         String sql = "SELECT course_code, course_name, credits, lecturer_id FROM courses";
@@ -76,21 +75,86 @@ public class AdminDAO {
         return list;
     }
 
-    public List<Object[]> getAllDepartments() { return new ArrayList<>(); }
-    public List<Object[]> getAllDegrees() { return new ArrayList<>(); }
+    public List<Object[]> getAllDepartments() {
+        List<Object[]> list = new ArrayList<>();
+        String sql = "SELECT d.dept_id, d.dept_name, d.hod, deg.degree_name, d.staff_count " +
+                "FROM departments d LEFT JOIN degrees deg ON d.degree_id = deg.degree_id";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            while (rs.next()) {
+                list.add(new Object[]{
+                        rs.getInt("dept_id"),
+                        rs.getString("dept_name"),
+                        rs.getString("hod") != null ? rs.getString("hod") : "",
+                        rs.getString("degree_name") != null ? rs.getString("degree_name") : "Not Assigned",
+                        rs.getInt("staff_count")
+                });
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public List<Object[]> getAllDegrees() {
+        List<Object[]> list = new ArrayList<>();
+        String sql = "SELECT deg.degree_id, deg.degree_name, d.dept_name, deg.student_count " +
+                "FROM degrees deg LEFT JOIN departments d ON deg.dept_id = d.dept_id";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            while (rs.next()) {
+                list.add(new Object[]{
+                        rs.getInt("degree_id"),
+                        rs.getString("degree_name"),
+                        rs.getString("dept_name") != null ? rs.getString("dept_name") : "Not Assigned",
+                        rs.getInt("student_count")
+                });
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
 
     public boolean addRecord(String table, Object[] data) {
         if ("Students".equals(table)) {
-            String sql = "INSERT INTO students (full_name, student_reg_id, degree_id, email, mobile) VALUES (?, ?, ?, ?, ?)";
-            try (Connection conn = DatabaseConnection.getConnection();
-                 PreparedStatement stmt = conn.prepareStatement(sql)) {
-                stmt.setString(1, (String) data[0]);
-                stmt.setString(2, (String) data[1]);
-                stmt.setInt(3, (Integer) data[2]);
-                stmt.setString(4, (String) data[3]);
-                stmt.setString(5, (String) data[4]);
-                return stmt.executeUpdate() > 0;
-            } catch (Exception e) { e.printStackTrace(); }
+            String userSql = "INSERT INTO users (username, password, role) VALUES (?, ?, 'Student')";
+            String studentSql = "INSERT INTO students (student_id, full_name, student_reg_id, degree_id, email, mobile) VALUES (?, ?, ?, ?, ?, ?)";
+            Connection conn = null;
+            try {
+                conn = DatabaseConnection.getConnection();
+                conn.setAutoCommit(false);
+
+                try (PreparedStatement stmt1 = conn.prepareStatement(userSql, PreparedStatement.RETURN_GENERATED_KEYS)) {
+                    stmt1.setString(1, (String) data[0]);
+                    stmt1.setString(2, (String) data[1]);
+                    stmt1.executeUpdate();
+
+                    ResultSet rs = stmt1.getGeneratedKeys();
+                    if (rs.next()) {
+                        int generatedUserId = rs.getInt(1);
+
+                        try (PreparedStatement stmt2 = conn.prepareStatement(studentSql)) {
+                            stmt2.setInt(1, generatedUserId);
+                            stmt2.setString(2, (String) data[2]);
+                            stmt2.setString(3, (String) data[3]);
+                            stmt2.setInt(4, (Integer) data[4]);
+                            stmt2.setString(5, (String) data[5]);
+                            stmt2.setString(6, (String) data[6]);
+                            stmt2.executeUpdate();
+                        }
+                    }
+                }
+                conn.commit();
+                return true;
+            } catch (Exception e) {
+                if (conn != null) { try { conn.rollback(); } catch (Exception ex) { ex.printStackTrace(); } }
+                e.printStackTrace();
+            } finally {
+                if (conn != null) { try { conn.close(); } catch (Exception ex) { ex.printStackTrace(); } }
+            }
         }
 
         if ("Lecturers".equals(table)) {
@@ -130,22 +194,45 @@ public class AdminDAO {
             }
         }
 
-        // WRITE ACCESS FOR COURSES
         if ("Courses".equals(table)) {
             String sql = "INSERT INTO courses (course_code, course_name, credits, lecturer_id) VALUES (?, ?, ?, ?)";
             try (Connection conn = DatabaseConnection.getConnection();
                  PreparedStatement stmt = conn.prepareStatement(sql)) {
-                stmt.setString(1, (String) data[0]); // course_code
-                stmt.setString(2, (String) data[1]); // course_name
-                stmt.setInt(3, (Integer) data[2]);   // credits
+                stmt.setString(1, (String) data[0]);
+                stmt.setString(2, (String) data[1]);
+                stmt.setInt(3, (Integer) data[2]);
                 if (data[3] == null) {
                     stmt.setNull(4, java.sql.Types.INTEGER);
                 } else {
-                    stmt.setInt(4, (Integer) data[3]); // lecturer_id
+                    stmt.setInt(4, (Integer) data[3]);
                 }
                 return stmt.executeUpdate() > 0;
             } catch (Exception e) { e.printStackTrace(); }
         }
+
+        if ("Departments".equals(table)) {
+            String sql = "INSERT INTO departments (dept_name, hod, degree_id, staff_count) VALUES (?, ?, ?, ?)";
+            try (Connection conn = DatabaseConnection.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(sql)) {
+                stmt.setString(1, (String) data[0]);
+                stmt.setString(2, (String) data[1]);
+                stmt.setInt(3, (Integer) data[2]);
+                stmt.setInt(4, (Integer) data[3]);
+                return stmt.executeUpdate() > 0;
+            } catch (Exception e) { e.printStackTrace(); }
+        }
+
+        if ("Degrees".equals(table)) {
+            String sql = "INSERT INTO degrees (degree_name, dept_id, student_count) VALUES (?, ?, ?)";
+            try (Connection conn = DatabaseConnection.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(sql)) {
+                stmt.setString(1, (String) data[0]);
+                stmt.setInt(2, (Integer) data[1]);
+                stmt.setInt(3, (Integer) data[2]);
+                return stmt.executeUpdate() > 0;
+            } catch (Exception e) { e.printStackTrace(); }
+        }
+
         return false;
     }
 
@@ -177,33 +264,76 @@ public class AdminDAO {
             } catch (Exception e) { e.printStackTrace(); }
         }
 
-        // EDIT ACCESS FOR COURSES
         if ("Courses".equals(table)) {
             String sql = "UPDATE courses SET course_name = ?, credits = ?, lecturer_id = ? WHERE course_code = ?";
             try (Connection conn = DatabaseConnection.getConnection();
                  PreparedStatement stmt = conn.prepareStatement(sql)) {
-                stmt.setString(1, (String) data[0]); // course_name
-                stmt.setInt(2, (Integer) data[1]);   // credits
+                stmt.setString(1, (String) data[0]);
+                stmt.setInt(2, (Integer) data[1]);
                 if (data[2] == null) {
                     stmt.setNull(3, java.sql.Types.INTEGER);
                 } else {
-                    stmt.setInt(3, (Integer) data[2]); // lecturer_id
+                    stmt.setInt(3, (Integer) data[2]);
                 }
-                stmt.setString(4, (String) data[3]); // course_code (identifier)
+                stmt.setString(4, (String) data[3]);
                 return stmt.executeUpdate() > 0;
             } catch (Exception e) { e.printStackTrace(); }
         }
+
+        if ("Departments".equals(table)) {
+            String sql = "UPDATE departments SET dept_name = ?, hod = ?, degree_id = ?, staff_count = ? WHERE dept_id = ?";
+            try (Connection conn = DatabaseConnection.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(sql)) {
+                stmt.setString(1, (String) data[0]);
+                stmt.setString(2, (String) data[1]);
+                stmt.setInt(3, (Integer) data[2]);
+                stmt.setInt(4, (Integer) data[3]);
+                stmt.setInt(5, (Integer) data[4]);
+                return stmt.executeUpdate() > 0;
+            } catch (Exception e) { e.printStackTrace(); }
+        }
+
+        if ("Degrees".equals(table)) {
+            String sql = "UPDATE degrees SET degree_name = ?, dept_id = ?, student_count = ? WHERE degree_id = ?";
+            try (Connection conn = DatabaseConnection.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(sql)) {
+                stmt.setString(1, (String) data[0]);
+                stmt.setInt(2, (Integer) data[1]);
+                stmt.setInt(3, (Integer) data[2]);
+                stmt.setInt(4, (Integer) data[3]);
+                return stmt.executeUpdate() > 0;
+            } catch (Exception e) { e.printStackTrace(); }
+        }
+
         return false;
     }
 
     public boolean deleteRecord(String table, String identifier) {
         if ("Students".equals(table)) {
-            String sql = "DELETE FROM students WHERE student_id = ?";
-            try (Connection conn = DatabaseConnection.getConnection();
-                 PreparedStatement stmt = conn.prepareStatement(sql)) {
-                stmt.setInt(1, Integer.parseInt(identifier));
-                return stmt.executeUpdate() > 0;
-            } catch (Exception e) { e.printStackTrace(); }
+            int targetId = Integer.parseInt(identifier);
+            String deleteStudent = "DELETE FROM students WHERE student_id = ?";
+            String deleteUser = "DELETE FROM users WHERE user_id = ?";
+            Connection conn = null;
+            try {
+                conn = DatabaseConnection.getConnection();
+                conn.setAutoCommit(false);
+
+                try (PreparedStatement stmt1 = conn.prepareStatement(deleteStudent)) {
+                    stmt1.setInt(1, targetId);
+                    stmt1.executeUpdate();
+                }
+                try (PreparedStatement stmt2 = conn.prepareStatement(deleteUser)) {
+                    stmt2.setInt(1, targetId);
+                    stmt2.executeUpdate();
+                }
+                conn.commit();
+                return true;
+            } catch (Exception e) {
+                if (conn != null) { try { conn.rollback(); } catch (Exception ex) { ex.printStackTrace(); } }
+                e.printStackTrace();
+            } finally {
+                if (conn != null) { try { conn.close(); } catch (Exception ex) { ex.printStackTrace(); } }
+            }
         }
 
         if ("Lecturers".equals(table)) {
@@ -233,7 +363,6 @@ public class AdminDAO {
             }
         }
 
-        // REMOVE ACCESS FOR COURSES
         if ("Courses".equals(table)) {
             String sql = "DELETE FROM courses WHERE course_code = ?";
             try (Connection conn = DatabaseConnection.getConnection();
@@ -242,6 +371,25 @@ public class AdminDAO {
                 return stmt.executeUpdate() > 0;
             } catch (Exception e) { e.printStackTrace(); }
         }
+
+        if ("Departments".equals(table)) {
+            String sql = "DELETE FROM departments WHERE dept_id = ?";
+            try (Connection conn = DatabaseConnection.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(sql)) {
+                stmt.setInt(1, Integer.parseInt(identifier));
+                return stmt.executeUpdate() > 0;
+            } catch (Exception e) { e.printStackTrace(); }
+        }
+
+        if ("Degrees".equals(table)) {
+            String sql = "DELETE FROM degrees WHERE degree_id = ?";
+            try (Connection conn = DatabaseConnection.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(sql)) {
+                stmt.setInt(1, Integer.parseInt(identifier));
+                return stmt.executeUpdate() > 0;
+            } catch (Exception e) { e.printStackTrace(); }
+        }
+
         return false;
     }
 }
